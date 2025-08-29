@@ -1,0 +1,11 @@
+data_paths:
+  raw_data: '../data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv'
+  X_test_npy: '../data/processed/X_test.npy'
+  y_test_npy: '../data/processed/y_test.npy'
+
+columns:
+  id: 'customerID'
+  total_charges: 'TotalCharges'
+  numeric: ['tenure', 'MonthlyCharges', 'TotalCharges']
+  binary: ['gender', 'Partner', 'Dependents', 'PhoneService', 'PaperlessBilling']
+  multiclass: ['MultipleLines', 'InternetService', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'Contract', 'PaymentMethod']
