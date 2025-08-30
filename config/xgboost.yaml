@@ -1,0 +1,5 @@
+model_name: 'xgboost'
+
+model_output_paths:
+  dir: '../models'
+  model: '../models/xgboost.joblib'

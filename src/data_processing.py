@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
-from src.utils import load_dataset, read_config
+from src.utils import load_dataset
 
 
 def preprocess_data(config):
@@ -18,7 +18,7 @@ def preprocess_data(config):
     data[total_charges_col] = pd.to_numeric(data[total_charges_col], errors='coerce')
 
     X = data.drop('Churn', axis=1)
-    y = data['Churn']
+    y = data['Churn'].map({'Yes': 1, 'No': 0})
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1, stratify=y)
 
     numeric_pipeline = Pipeline(steps=[
@@ -52,8 +52,3 @@ def preprocess_data(config):
     print(f'After processing: X_train.shape={X_train.shape}, X_test.shape={X_test.shape}')
 
     return X_train, X_test, y_train, y_test
-
-
-if __name__ == '__main__':
-    config = read_config('../config/base_config.yaml')
-    preprocess_data(config)
