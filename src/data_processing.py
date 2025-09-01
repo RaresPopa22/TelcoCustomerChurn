@@ -1,4 +1,5 @@
 import pandas as pd
+from imblearn.over_sampling import SMOTE
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
@@ -19,7 +20,8 @@ def preprocess_data(config):
 
     X = data.drop('Churn', axis=1)
     y = data['Churn'].map({'Yes': 1, 'No': 0})
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=config['train_test_split']['test_size'], random_state=1, stratify=y)
 
     numeric_pipeline = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='constant', fill_value=0)),
@@ -52,3 +54,9 @@ def preprocess_data(config):
     print(f'After processing: X_train.shape={X_train.shape}, X_test.shape={X_test.shape}')
 
     return X_train, X_test, y_train, y_test
+
+
+def apply_SMOTE(X_train, y_train):
+    smote = SMOTE(random_state=1)
+    X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+    return X_train_resampled, y_train_resampled
