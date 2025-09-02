@@ -9,7 +9,7 @@ from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from src.utils import load_dataset
 
 
-def preprocess_data(config):
+def preprocess_data(config, split_for_eval=False):
     columns_config = config['columns']
     data = load_dataset(config)
 
@@ -22,6 +22,10 @@ def preprocess_data(config):
     y = data['Churn'].map({'Yes': 1, 'No': 0})
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=config['train_test_split']['test_size'], random_state=1, stratify=y)
+
+    if split_for_eval:
+        X_train, X_eval, y_train, y_eval = train_test_split(
+            X, y, test_size=config['hyperparams']['cv_size'], random_state=1, stratify=y)
 
     numeric_pipeline = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='constant', fill_value=0)),
@@ -53,8 +57,10 @@ def preprocess_data(config):
 
     print(f'After processing: X_train.shape={X_train.shape}, X_test.shape={X_test.shape}')
 
-    return X_train, X_test, y_train, y_test
-
+    if split_for_eval:
+        return X_train, X_eval, X_test, y_train, y_eval, y_test
+    else:
+        return X_train, X_test, y_train, y_test
 
 def apply_SMOTE(X_train, y_train):
     smote = SMOTE(random_state=1)

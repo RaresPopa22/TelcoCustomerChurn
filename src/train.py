@@ -11,9 +11,9 @@ from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSe
 
 def train(config):
     model_name = config['model_name']
-    X_train, X_test, y_train, y_test = preprocess_data(config)
 
     if model_name == 'logistic_regression_cv':
+        X_train, X_test, y_train, y_test = preprocess_data(config)
         hyperparams = config['hyperparams']
         model = LogisticRegressionCV(
             Cs=hyperparams['Cs'],
@@ -22,6 +22,7 @@ def train(config):
             class_weight=hyperparams['class_weight'])
         model.fit(X_train, y_train)
     elif model_name == 'logistic_regression':
+        X_train, X_test, y_train, y_test = preprocess_data(config)
         hyperparams = config['hyperparams']
         model = LogisticRegression(
             max_iter=hyperparams['max_iter'], class_weight=hyperparams['class_weight'], random_state=1)
@@ -44,6 +45,7 @@ def train(config):
 
         model = grid_search.best_estimator_
     elif model_name == 'xgboost':
+        X_train, X_eval, X_test, y_train, y_eval, y_test = preprocess_data(config, True)
         hyperparams = config['hyperparams']
         X_train, X_eval, y_train, y_eval = train_test_split(
             X_train, y_train, test_size=hyperparams['cv_size'], random_state=1, stratify=y_train
