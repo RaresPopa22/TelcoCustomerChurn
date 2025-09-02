@@ -1,8 +1,8 @@
 model_name: 'logistic_regression_cv'
 
 model_output_paths:
-  dir: '../models'
-  model: '../models/logistic_regression_cv.joblib'
+  dir: 'models'
+  model: 'models/logistic_regression_cv.joblib'
 
 hyperparams:
   Cs: 10

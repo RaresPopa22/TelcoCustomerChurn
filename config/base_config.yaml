@@ -1,7 +1,7 @@
 data_paths:
-  raw_data: '../data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv'
-  X_test: '../data/processed/X_test.csv'
-  y_test: '../data/processed/y_test.csv'
+  raw_data: 'data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv'
+  X_test: 'data/processed/X_test.csv'
+  y_test: 'data/processed/y_test.csv'
 
 columns:
   id: 'customerID'

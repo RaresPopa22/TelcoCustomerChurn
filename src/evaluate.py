@@ -40,6 +40,7 @@ def evaluate(config, model_paths):
         })
 
     results_df = pd.DataFrame(results).set_index('Model')
+    pd.set_option('display.max_columns', None)
     print(results_df.round(4))
 
     plot_precision_recall_curve(recalls, precisions, labels, auprcs)
