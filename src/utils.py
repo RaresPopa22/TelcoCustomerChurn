@@ -32,7 +32,7 @@ def deep_merge(base, override):
     result = {**base}
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            deep_merge(result[key], value)
+            result[key] = deep_merge(result[key], value)
         else:
             result[key] = value
 
@@ -71,14 +71,14 @@ def save_pipeline(config, model):
 
 def save_test_data(config, X_test, y_test):
     data_config = config['data_paths']
-    X_test.to_csv(data_config['X_test'], index=False)
-    y_test.to_csv(data_config['y_test'], index=False)
+    joblib.dump(X_test, data_config['X_test'])
+    joblib.dump(y_test, data_config['y_test'])
 
 
 def load_test_data(config):
     data_config = config['data_paths']
-    X_test = pd.read_csv(data_config['X_test'])
-    y_test = pd.read_csv(data_config['y_test'])
+    X_test = joblib.load(data_config['X_test'])
+    y_test = joblib.load(data_config['y_test'])
 
     return X_test, y_test.squeeze()
 

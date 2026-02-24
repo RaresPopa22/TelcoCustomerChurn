@@ -2,9 +2,11 @@ model_name: 'logistic_regression_cv'
 
 model_output_paths:
   dir: 'models'
-  model: 'models/logistic_regression_cv.joblib'
+  model: 'models/logistic_regression_cv_pipeline.joblib'
+  threshold: 'models/logistic_regression_cv_pipeline_threshold.json'
 
 hyperparams:
   Cs: 10
   cv: 5
-  class_weight: 'balanced'
+  class_weight: null
+  scoring: 'average_precision'

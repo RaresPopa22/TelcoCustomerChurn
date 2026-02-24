@@ -7,8 +7,11 @@ columns:
   id: 'customerID'
   total_charges: 'TotalCharges'
   numeric: ['tenure', 'MonthlyCharges', 'TotalCharges']
-  binary: ['gender', 'Partner', 'Dependents', 'PhoneService', 'PaperlessBilling']
+  binary: ['gender', 'Partner', 'Dependents', 'PhoneService', 'PaperlessBilling', 'SeniorCitizen']
   multiclass: ['MultipleLines', 'InternetService', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'Contract', 'PaymentMethod']
 
 train_test_split:
   test_size: 0.2
+  eval_size: 0.2
+
+random_state: 1
