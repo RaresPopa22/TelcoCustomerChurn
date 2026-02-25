@@ -6,14 +6,14 @@ from src.utils import deep_merge, find_optimal_threshold, load_test_data, read_c
 
 class TestUtils:
 
-    def test_deep_merge_flat_key_override(self, mock_base_config):
+    def test_deep_merge_flat_key_override(self, sample_base_config):
         override_config = {'A': 2}
-        config = deep_merge(mock_base_config, override_config)
+        config = deep_merge(sample_base_config, override_config)
         assert config.get('A') == 2
 
-    def test_deep_merge_adding_new_keys(self, mock_base_config):
+    def test_deep_merge_adding_new_keys(self, sample_base_config):
         override_config = {'B': 1}
-        config = deep_merge(mock_base_config, override_config)
+        config = deep_merge(sample_base_config, override_config)
         assert config.get('A') == 1
         assert config.get('B') == 1
         
@@ -23,15 +23,15 @@ class TestUtils:
         config = deep_merge(base_config, override_config)
         assert config == {'A': {'B': 2, 'C': 2}, 'D': 3}
 
-    def test_deep_merge_empty(self, mock_base_config):
+    def test_deep_merge_empty(self, sample_base_config):
         override_config = {}
-        config = deep_merge(mock_base_config, override_config)
+        config = deep_merge(sample_base_config, override_config)
         assert config.get('A') == 1
 
-    def test_deep_merge_base_not_mutated(self, mock_base_config):
+    def test_deep_merge_base_not_mutated(self, sample_base_config):
         override_config = {'B': 1}
-        deep_merge(mock_base_config, override_config)
-        assert mock_base_config == {'A': 1}
+        deep_merge(sample_base_config, override_config)
+        assert sample_base_config == {'A': 1}
     
     def test_find_optimal_threshold_perfect_separation(self):
         y_true = np.array([0, 0, 1, 1, 1])
