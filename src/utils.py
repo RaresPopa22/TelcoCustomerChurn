@@ -1,11 +1,20 @@
 import argparse
+from contextlib import contextmanager
+import logging
 import os
+from pathlib import Path
+import warnings
 
 import joblib
+import numpy as np
 import pandas as pd
 import yaml
 from matplotlib import pyplot as plt
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_auc_score, roc_curve
+from sklearn.metrics import precision_recall_curve
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def load_dataset(config):
@@ -19,15 +28,26 @@ def read_config(path):
     return config
 
 
+def deep_merge(base, override):
+    result = {**base}
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = value
+
+    return result
+
+
 def read_configs(base_path, specific_path):
     base_config = read_config(base_path)
     specific_config = read_config(specific_path)
 
-    return {**base_config, **specific_config}
+    return deep_merge(base_config, specific_config)
 
 
 def parse_args_and_get_config(stage):
-    base_config = "config/base_config.yaml"
+    base_config = Path(__file__).parent.parent / 'config' / 'base_config.yaml'
     parser = argparse.ArgumentParser()
 
     if stage == 'train':
@@ -35,16 +55,15 @@ def parse_args_and_get_config(stage):
         args = parser.parse_args()
         return read_configs(base_config, args.config)
     elif stage == 'evaluate':
-        parser.add_argument('--models', nargs="+", required=True, help='Paths to model files')
-        parser.add_argument('--x-test', required=True, help='Paths to X_test_scaled.csv')
-        parser.add_argument('--y-test', required=True, help='Paths to y_test.csv')
+        parser.add_argument('--configs', nargs="+", required=True, help='Paths to model config files')
         args = parser.parse_args()
-        return read_config(base_config), args.models
+        base = read_config(base_config)
+        return [deep_merge(base, read_config(c)) for c in args.configs]
     else:
         raise ValueError("Unknown stage. Only 'train' and 'evaluate' supported so far")
 
 
-def save_model(config, model):
+def save_pipeline(config, model):
     model_config = config['model_output_paths']
     os.makedirs(model_config['dir'], exist_ok=True)
     joblib.dump(model, model_config['model'])
@@ -52,20 +71,34 @@ def save_model(config, model):
 
 def save_test_data(config, X_test, y_test):
     data_config = config['data_paths']
-    X_test.to_csv(data_config['X_test'], index=False)
-    y_test.to_csv(data_config['y_test'], index=False)
+    joblib.dump(X_test, data_config['X_test'])
+    joblib.dump(y_test, data_config['y_test'])
 
 
 def load_test_data(config):
     data_config = config['data_paths']
-    X_test = pd.read_csv(data_config['X_test'])
-    y_test = pd.read_csv(data_config['y_test'])
+    X_test = joblib.load(data_config['X_test'])
+    y_test = joblib.load(data_config['y_test'])
 
     return X_test, y_test.squeeze()
 
 
-def load_model(path):
+def load_pipeline(path):
     return joblib.load(path)
+
+
+def find_optimal_threshold(y_true, y_pred_proba):
+    precision, recall, threshold = precision_recall_curve(y_true, y_pred_proba)
+    f1_score = 2 * precision[:-1] * recall[:-1] / (precision[:-1] + recall[:-1] + 1e-8)
+    best_idx = np.argmax(f1_score)
+    return threshold[best_idx]
+
+
+@contextmanager
+def suppress_arithmetic_noise():
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', message='overflow|invalid|divide by zero', category=RuntimeWarning)
+        yield
 
 
 def plot_precision_recall_curve(recalls, precisions, labels, auprcs):
@@ -75,30 +108,22 @@ def plot_precision_recall_curve(recalls, precisions, labels, auprcs):
         ax.plot(recalls[i], precisions[i], label=f'{labels[i]} (AUPRC = {auprcs[i]:.3f})')
 
     ax.set_xlabel('Recall', fontsize=14)
-    ax.set_ylabel('Precission', fontsize=14)
+    ax.set_ylabel('Precision', fontsize=14)
     ax.set_title('Precision-Recall Curve for Customer Churn', fontsize=16)
     ax.legend(loc='lower left')
     plt.show()
 
 
-def plot_confusion_matrix(y_test, y_pred, model_name):
-    cm = confusion_matrix(y_test, y_pred)
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-    disp.plot()
-    plt.title(f'Confusion Matrix for {model_name}')
-    plt.show()
-
-
-def plot_roc(y_test, y_pred_probas, labels):
+def plot_calibration_curve(probs_true, probs_pred, labels):
     fig, ax = plt.subplots(figsize=(10, 7))
 
-    for i in range(len(y_pred_probas)):
-        fpr, tpr, _ = roc_curve(y_test, y_pred_probas[i])
-        auc = roc_auc_score(y_test, y_pred_probas[i])
-        ax.plot(fpr, tpr, label=f'{labels[i]} (AUC = {auc:.3f})')
+    for i in range(len(probs_true)):
+        ax.plot(probs_pred[i], probs_true[i], marker='o', label=f'{labels[i]}')
 
-    plt.ylabel('True Positive Rate')
-    plt.xlabel('False Positive Rate')
-    plt.title('ROC Curve')
-    plt.legend(loc=4)
+    ax.plot([0,1], [0,1], transform=ax.transAxes, color="black", linestyle="--")
+    ax.set_xlabel('Mean Predicted Probability', fontsize=14)
+    ax.set_ylabel('Fraction of Positives', fontsize=14)
+    ax.set_title('Calibration Curve for Customer Churn', fontsize=16)
+    ax.legend(loc='lower right')
     plt.show()
+

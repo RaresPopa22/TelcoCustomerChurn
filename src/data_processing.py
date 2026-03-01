@@ -1,15 +1,11 @@
+import logging
+
 import pandas as pd
-from imblearn.over_sampling import SMOTE
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
 from src.utils import load_dataset
 
-
-def preprocess_data(config, split_for_eval=False):
+def preprocess_data(config):
     columns_config = config['columns']
     data = load_dataset(config)
 
@@ -21,48 +17,8 @@ def preprocess_data(config, split_for_eval=False):
     X = data.drop('Churn', axis=1)
     y = data['Churn'].map({'Yes': 1, 'No': 0})
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=config['train_test_split']['test_size'], random_state=1, stratify=y)
+        X, y, test_size=config['train_test_split']['test_size'], 
+        random_state=config.get('random_state', 1), stratify=y)
 
-    if split_for_eval:
-        X_train, X_eval, y_train, y_eval = train_test_split(
-            X, y, test_size=config['hyperparams']['cv_size'], random_state=1, stratify=y)
-
-    numeric_pipeline = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='constant', fill_value=0)),
-        ('scaler', StandardScaler())
-    ])
-
-    binary_pipeline = Pipeline(steps=[
-        ('encoder', OrdinalEncoder())
-    ])
-
-    multiclass_pipeline = Pipeline(steps=[
-        ('encoder', OneHotEncoder(handle_unknown='ignore', drop='first', sparse_output=False))
-    ])
-
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', numeric_pipeline, columns_config['numeric']),
-            ('binary', binary_pipeline, columns_config['binary']),
-            ('cat', multiclass_pipeline, columns_config['multiclass'])
-        ],
-        remainder='passthrough',
-        verbose_feature_names_out=False
-    )
-
-    preprocessor.set_output(transform='pandas')
-
-    X_train = preprocessor.fit_transform(X_train)
-    X_test = preprocessor.transform(X_test)
-
-    print(f'After processing: X_train.shape={X_train.shape}, X_test.shape={X_test.shape}')
-
-    if split_for_eval:
-        return X_train, X_eval, X_test, y_train, y_eval, y_test
-    else:
-        return X_train, X_test, y_train, y_test
-
-def apply_SMOTE(X_train, y_train):
-    smote = SMOTE(random_state=1)
-    X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
-    return X_train_resampled, y_train_resampled
+    
+    return X_train, X_test, y_train, y_test
