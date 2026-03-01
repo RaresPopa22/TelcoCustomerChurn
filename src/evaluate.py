@@ -57,7 +57,7 @@ def evaluate(configs):
 
     results_df = pd.DataFrame(results).set_index('Model')
     pd.set_option('display.max_columns', None)
-    logger.info(results_df.round(4))
+    logger.info(f"\n{results_df.round(4).to_string()}")
 
     plot_precision_recall_curve(recalls, precisions, labels, auprcs)
     plot_calibration_curve(cal_probs_true, cal_probs_pred, labels)
